@@ -1,0 +1,16 @@
+tr:nth-child(even) {
+    background-color: #ECEFF7;
+}
+
+.ranking_table{
+	width: 40%;
+    margin: auto;
+    border: 3px solid green;
+    padding: 10px;
+	display: inline-block;
+}
+
+.tables_div{
+    text-align: center;
+}
+
