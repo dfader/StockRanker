@@ -15,17 +15,20 @@ dict_returns = {}
 dict_quotes = {}
 dict_data = {}
 symbols = []
-n_trading_days = 0
+date_list = []
 str_start_date = '01/01/16'
 str_end_date = time.strftime('%x')
+
+def get_quotes(symbol):
+    return dict_quotes[symbol]
 
 try:
     today = time.strftime("%x")
     print 'Retrieving stock quotes up until ' + today
 
     n_year = datetime.strptime(str_end_date, '%x').year
-    n_trading_days = gtc.get_trading_days(str_start_date, str_end_date)
-    print 'Expecting to find quotes for ' + str(n_trading_days) + ' trading days so far in calendar year ' + str(n_year)
+    date_list = gtc.get_trading_days(str_start_date, str_end_date)
+    print 'Expecting to find quotes for ' + str(len(date_list)) + ' trading days so far in calendar year ' + str(n_year)
 
 except Exception as e:
     print 'Error retrieving market calendar', e
@@ -52,9 +55,9 @@ except Exception as e:
 
 print 'Retrieving Quotes for Constituents'
 progress = 0.0
-for j in range(1, 10):
-    entry = sp500[j]
-#for entry in sp500:
+# for j in range(0, 6):
+#     entry = sp500[j]
+for entry in sp500:
     progress+= 1
     if progress % 50 == 0:
         print 'Retrieved ' + str(round(((progress / 500) * 100), 0)) + '% of quotes...'
@@ -66,9 +69,9 @@ for j in range(1, 10):
         symbols.append(symbol)
 
         quotes = psq.get_quotes(symbol, str_start_date, str_end_date)
-        if len(quotes) != n_trading_days:
+        if len(quotes) != len(date_list):
             print 'Missing data for ' + symbol + \
-                  '. Expected ' + str(n_trading_days) + \
+                  '. Expected ' + str(len(date_list)) + \
                   ' trading days but got ' + str(len(quotes))
             # print quoteData
         else:
@@ -98,7 +101,7 @@ try:
     top_list = []
     for key, value in sorted(dict_returns.iteritems(), key=lambda (k, v): (v, k)):
         if i <= 25:
-            bottom_list.append(ytd_return(key, value))
+            bottom_list.append(ytd_return(key, round(value,2)))
         else:
             break
 
@@ -107,7 +110,7 @@ try:
     i = 1
     for key, value in sorted(dict_returns.iteritems(), key=lambda (k, v): (v, k), reverse=True):
         if i <= 25:
-            top_list.append(ytd_return(key, value))
+            top_list.append(ytd_return(key, round(value,2)))
         else:
             break
 
@@ -123,9 +126,7 @@ try:
         dict_data[pair.symbol] = stock_info
 #        print pair.symbol, str(pair.ytd_return)
 
-    print 'dict_data: ', dict_data
-    script_list = []
-    script_list.append(build_js.build_javascript_files(top_list, bottom_list))
+    script_list = [build_js.build_javascript_files(top_list, bottom_list, dict_quotes, date_list)]
     html_file = build_html.build_html_file(top_list, bottom_list, dict_data, script_list)
     build_html.launch_page(html_file)
 

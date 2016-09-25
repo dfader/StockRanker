@@ -1,16 +1,34 @@
-tr:nth-child(even) {
-    background-color: #ECEFF7;
+.page_header{
+	text-align: center;
+	font-size: 50;
+	font-weight: bold;
+	color: #03409C;
 }
 
-.ranking_table{
+.ranking_div{
 	width: 40%;
     margin: auto;
-    border: 3px solid green;
-    padding: 10px;
+    border: 2px solid #A4C9FF;
+    padding: 50px;
 	display: inline-block;
+}
+
+.table_title{
+	text-align: center;
+	font-size: 25;
+	font-weight: bold;
+	color: #03409C;
 }
 
 .tables_div{
     text-align: center;
 }
 
+.center_col{
+	text-align: center;
+}
+
+.table_header{
+	background-color: #03409C;
+	color: white;
+}

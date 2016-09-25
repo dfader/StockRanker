@@ -23,7 +23,7 @@ def get_month_calendar(n_year, n_month):
 def get_open_days(root, b_start_month, b_final_month,
                   d_start_date=datetime.strptime(time.strftime('%x'), '%x'),
                   d_end_date=datetime.strptime(time.strftime('%x'), '%x')):
-    count = 0
+    date_list = []
     str_year = root[0].text
     str_month = root[1].text
     days = root[2]
@@ -32,27 +32,27 @@ def get_open_days(root, b_start_month, b_final_month,
             if b_start_month:
                 d_date = datetime.strptime(day.find('date').text, '%Y-%m-%d')
                 if d_date >= d_start_date:
-                    count += 1
+                    date_list.append(day.find('date').text)
             elif b_final_month:
                 d_date = datetime.strptime(day.find('date').text, '%Y-%m-%d')
                 if d_date < d_end_date:
-                    count += 1
+                    date_list.append(day.find('date').text)
                 elif d_date == d_end_date:
                     cur_hour = time.strftime('%H')
                     cur_min = time.strftime('%M')
                     if cur_hour >= 16 and cur_min >= 10:
-                        count += 1
+                        date_list.append(day.find('date').text)
             else:
-                count += 1
+                date_list.append(day.find('date').text)
 
-    return count
+    return date_list
 
 
 # Expects start_date & end_date in the Locale's appropriate date representation (i.e. %x -> mm/dd/YY for US/CA)
 # Returns the # of trading days between start_date and end_date
 # If current local time > 16:00, return value is inclusive of end_date, else it is exclusive
 def get_trading_days(str_start_date, str_end_date):
-    n_trading_days = 0
+    date_list = []
     try:
         print 'Getting # of trading days between ' + str_start_date + ' and ' + str_end_date
 
@@ -74,16 +74,16 @@ def get_trading_days(str_start_date, str_end_date):
             for i in range(n_start_month, 13):
                 root = get_month_calendar(n_start_year, i)
                 if i == n_start_month:
-                    n_trading_days += get_open_days(root, True, False, d_start_date)
+                    date_list += get_open_days(root, True, False, d_start_date)
                 else:
-                    n_trading_days += get_open_days(root, False, False)
+                    date_list += get_open_days(root, False, False)
 
             n_cur_year = n_start_year + 1
             # Count trading days in full year
             while n_cur_year < n_end_year:
                 for i in range(1, 13):
                     root = get_month_calendar(n_cur_year, i)
-                    n_trading_days += get_open_days(root, False, False)
+                    date_list += get_open_days(root, False, False)
 
                 n_cur_year += 1
 
@@ -91,11 +91,11 @@ def get_trading_days(str_start_date, str_end_date):
         for i in range(1, n_end_month + 1):
             root = get_month_calendar(n_end_year, i)
             if i == n_end_month:
-                n_trading_days += get_open_days(root, False, True, d_end_date)
+                date_list += get_open_days(root, False, True, d_end_date)
             else:
-                n_trading_days += get_open_days(root, False, False)
+                date_list += get_open_days(root, False, False)
 
-        return n_trading_days
+        return date_list
     except Exception as e:
         print 'Error retrieving trading days between ' + str_start_date + ' and ' + str_end_date, e
         exc_type, exc_value, exc_traceback = sys.exc_info()

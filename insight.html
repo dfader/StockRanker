@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RBC1 – Real Time Analytic Portal</title>
+	<link rel="stylesheet" href="resources/css/insight.css" />
+	<link rel="stylesheet" href="resources/css/jquery.dataTables.css" />
+	<!--link rel="stylesheet" href="resources/css/symphony-style.css" /-->
+	<script src="resources/js/loader.js"></script>
+	<script src="resources/js/jquery.min.js"></script>
+	<script src="resources/js/jquery.plugin.js"></script>
+	<script src="resources/js/jquery.gchart.js"></script>
+</head>
+<body class="symphony-external-app">
+	<img style="margin: 10px;" border="0" src="https://localhost:9000/resources/img/rbcdarklogo.png" height="60px">
+	<span style="color:#ffffff" class="header"> RBC1 – Real Time Analytics Portal</span>
+	<br>
+	<br>
+    <!--div id="cashtag"></div-->
+	<!-- <button>Click me</button> -->
+	<input id="searchBar" type="text" name="securityName" placeholder="Input your security name">
+	<input type="button" name="search" value="search" class="refreshButton"/>
+	<p/>
+    <table class="columns" width="100%" style="border:none">
+	  <tr>
+   		<td width="100%" style="color:#ffffff">Trade Volume for Previous Day:
+	  </td>
+      <tr>
+        <td width="100%"<div id="dashboard">
+				<div id="chart_div"></div>
+			<!--div id="dashboard">
+				<div id="chart_div"></div>
+				<div id="control_div"></div>
+			<p><span id='dbgchart'></span></p>
+			</div-->	
+		</td>
+        <!-- <td width="100%"><div id="piechart_div" style="border: 1px solid #ccc"></div></td> -->
+       <!-- <td width="50%"><div id="barchart_div" style="border: 1px solid #ccc"></div></td>-->
+      </tr>
+    </table>
+	<p/>
+	<span width="100%" style="color:#ffffff">Trade Volume Prediction:	
+<div id="dashboard2">
+    <div id="chart_div2"></div>
+    <div id="control_div2"></div>
+<p><span id='dbgchart2'></span></p>
+</div>		
+	<br>
+	<div id="performanceDiv" class="performance"></div>
+<!-- 	<div id="liveChart" class="chart" style="width: 100%; height: 300px;"></div> -->
+
+    <script type="text/javascript" src="resources/js/symphony-api.js" charset="utf-8"></script>
+    <script type="text/javascript" src="request.js" charset="utf-8"></script>
+    <script type="text/javascript" src="insight.js" charset="utf-8"></script>
+</body>
+</html>

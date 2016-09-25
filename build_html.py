@@ -13,9 +13,12 @@ def build_html_file(top_list, bottom_list, dict_data, script_list):
         print bottom_stocks_table
         message = """<html><head>
                     <link rel="stylesheet" type="text/css" href="DataTables/css/jquery.dataTables.min.css">
+                    <link rel="stylesheet" type="text/css" href="Select-1.2.0/css/select.dataTables.min.css">
                     <link rel="stylesheet" type="text/css" href="css/StockRanker.css">
                     <script type="text/javascript" charset="utf8" src="js/jquery-1.12.3.js"></script>
-                    <script type="text/javascript" charset="utf8" src="DataTables/js/jquery.dataTables.min.js"></script>"""
+                    <script type="text/javascript" charset="utf8" src="js/loader.js"></script>
+                    <script type="text/javascript" charset="utf8" src="DataTables/js/jquery.dataTables.min.js"></script>
+                    <script type="text/javascript" charset="utf8" src="Select-1.2.0/js/dataTables.select.min.js"></script>"""
 
 
         for script in script_list:
@@ -23,9 +26,24 @@ def build_html_file(top_list, bottom_list, dict_data, script_list):
 
         message+="""</head>
                     <body><br>
+                        <div class="page_header">S&P 500 YTD Performance 2016</div>
+                        <br><br>
                         <div class="tables_div">
-                            <div class="ranking_table">""" + top_stocks_table + """</div>
-                            <div class="ranking_table">""" + bottom_stocks_table + """</div>
+                            <div class="ranking_div">
+                                <div class=table_title>25 Best Performing Stocks YTD</div>
+                                <br>
+                                <div class=ranking_table>""" + top_stocks_table + """</div>
+                            </div>
+                            <div class="ranking_div">
+                                <div class=table_title>25 Worst Performing Stocks YTD</div>
+                                <br>
+                                <div class=ranking_table>""" + bottom_stocks_table + """</div>
+                            </div>
+                        </div>
+                        <br>
+                        <div id="dashboard">
+                            <div id="chart_div"></div>
+                            <div id="control_div"></div>
                         </div>
                     <br></body></html>"""
 
@@ -52,18 +70,21 @@ def launch_page(file_name):
 
 def build_table(stock_list, dict_data, table_id):
     try:
-            html_table = """<table id=\"""" + table_id + """"><thead>
-                         <th>Stock Symbol</th>
-                         <th>Name</th>
-                         <th>YTD Return %</th>
-                         </thead><tbody>"""
+            html_table = """<table id=\"""" + table_id + """" class="stock_table">
+                        <thead>
+                        <tr class="table_header">
+                            <th>Stock Symbol</th>
+                            <th>Name</th>
+                            <th>YTD Return %</th>
+                        </tr>
+                        </thead><tbody>"""
 
             for stock in stock_list:
                 stock_data = dict_data[stock.symbol]
-                html_table += """<tr>
-                              <td>""" + stock.symbol + """</td>
+                html_table += """<tr id=\"""" + stock.symbol + """">
+                              <td class="center_col">""" + stock.symbol + """</td>
                               <td>""" + stock_data.name + """</td>
-                              <td>""" + str(stock.ytd_return) + """</td>
+                              <td class="center_col">""" + str(stock.ytd_return) + """</td>
                               </tr>"""
 
             html_table += "</tbody></table>"

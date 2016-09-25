@@ -73,6 +73,7 @@ table.dataTable tbody tr.selected {
 table.dataTable tbody th,
 table.dataTable tbody td {
   padding: 8px 10px;
+  border: 1px solid white;
 }
 table.dataTable.row-border tbody th, table.dataTable.row-border tbody td, table.dataTable.display tbody th, table.dataTable.display tbody td {
   border-top: 1px solid #ddd;
@@ -277,6 +278,7 @@ table.dataTable td {
 .dataTables_wrapper {
   position: relative;
   clear: both;
+  background-color: #C8D4F6;
   *zoom: 1;
   zoom: 1;
 }
