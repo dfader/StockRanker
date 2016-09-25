@@ -11,12 +11,12 @@ import build_js
 import sys, traceback
 
 ytd_return = collections.namedtuple('ytd_return', 'symbol ytd_return')
+date_quote = collections.namedtuple('date_quote', 'date price')
 dict_returns = {}
 dict_quotes = {}
 dict_data = {}
-symbols = []
 date_list = []
-str_start_date = '01/01/16'
+str_start_date = '12/31/15'
 str_end_date = time.strftime('%x')
 
 def get_quotes(symbol):
@@ -65,30 +65,35 @@ for entry in sp500:
     try:
         # Get Symbol
         symbol = entry['symbol']
-        symbol = symbol.replace('-', '.')
-        symbols.append(symbol)
 
-        quotes = psq.get_quotes(symbol, str_start_date, str_end_date)
-        if len(quotes) != len(date_list):
-            print 'Missing data for ' + symbol + \
-                  '. Expected ' + str(len(date_list)) + \
-                  ' trading days but got ' + str(len(quotes))
-            # print quoteData
-        else:
-            lastQuote = quotes[len(quotes) - 1]
-            firstQuote = quotes[0]
-            lastVals = lastQuote.split(',')
-            firstVals = firstQuote.split(',')
-            if len(lastVals) != 6:
-                print 'Error in quote formatting of final quote for symbol ' + symbol + ':' + lastQuote
-            elif len(firstVals) != 6:
-                print 'Error in quote formatting of first quote for symbol ' + symbol + ':' + firstQuote
-            else:
-                lastClose = float(lastVals[4])
-                firstOpen = float(firstVals[1])
-                ytdRet = (lastClose - firstOpen) / firstOpen
-                dict_returns[symbol] = ytdRet * 100
-                dict_quotes[symbol] = quotes
+        # quotes = psq.get_quotes(symbol, str_start_date, str_end_date)
+        # quotes += psq.get_single_quote(symbol, '09/23/16')
+        # if len(quotes) != len(date_list):
+        #     print 'Missing data for ' + symbol + \
+        #           '. Expected ' + str(len(date_list)) + \
+        #           ' trading days but got ' + str(len(quotes))
+        #     # print quotes
+        # else:
+        # lastClose = quotes['Adj. Close'][len(quotes) - 1]
+        # firstOpen = quotes['Adj. Open'][0]
+        # lastQuote = quotes[len(quotes) - 1]
+        # firstQuote = quotes[0]
+        # lastClose = float(lastQuote.find('Close').text)
+        # firstOpen = float(firstQuote.find('Open').text)
+        # lastVals = lastQuote.split(',')
+        # firstVals = firstQuote.split(',')
+        # if len(lastVals) != 6:
+        #     print 'Error in quote formatting of final quote for symbol ' + symbol + ':' + lastQuote
+        # elif len(firstVals) != 6:
+        #     print 'Error in quote formatting of first quote for symbol ' + symbol + ':' + firstQuote
+        # else:
+        #     lastClose = float(lastVals[4])
+        #     firstOpen = float(firstVals[1])
+        # ytdRet = (lastClose - firstOpen) / firstOpen
+
+        quotes = psq.get_YTD(symbol, str_start_date, str_end_date)
+        ytdRet = quotes['Adj. Close'][0]
+        dict_returns[symbol] = ytdRet * 100
     except Exception as e:
         print 'Error retrieving data from entry ' + str(entry), e
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -119,11 +124,21 @@ try:
     for pair in bottom_list:
         stock_info = psd.get_symbol_data(pair.symbol)
         dict_data[pair.symbol] = stock_info
+        quotes = psq.get_quotes(pair.symbol, str_start_date, str_end_date)
+        close_prices = quotes['Adj. Close']
+        matrix = []
+        for i in range(len(close_prices)):
+            matrix.append([list(close_prices.index)[i], close_prices[i]])
+        dict_quotes[pair.symbol] = matrix
 #        print pair.symbol, str(pair.ytd_return)
 
     for pair in top_list:
         stock_info = psd.get_symbol_data(pair.symbol)
         dict_data[pair.symbol] = stock_info
+        quotes = psq.get_quotes(pair.symbol, str_start_date, str_end_date)
+        close_prices = quotes['Adj. Close']
+        matrix = [[list(close_prices.index)[i], close_prices[i]] for i in range(len(close_prices))]
+        dict_quotes[pair.symbol] = matrix
 #        print pair.symbol, str(pair.ytd_return)
 
     script_list = [build_js.build_javascript_files(top_list, bottom_list, dict_quotes, date_list)]

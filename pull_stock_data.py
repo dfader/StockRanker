@@ -9,6 +9,8 @@ stock_info = collections.namedtuple('stock_info', 'symbol name')
 # Takes start_date and end_date in the form mm/dd/YY
 def get_symbol_data(symbol):
     try:
+        symbol = symbol.replace('.','-')
+
         # Retrieve quote data for symbol
         url = 'http://d.yimg.com/aq/autoc?query=' + symbol + '&region=US&lang=en-US'
         request = Request(url)
@@ -30,5 +32,3 @@ def get_symbol_data(symbol):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         print "*** print_tb:"
         traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
-
-print get_symbol_data('AAPL')

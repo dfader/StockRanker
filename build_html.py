@@ -8,16 +8,14 @@ def build_html_file(top_list, bottom_list, dict_data, script_list):
         f = open('StockRanker.html', 'w')
 
         top_stocks_table = build_table(top_list, dict_data, 'top_list_table_id')
-        print top_stocks_table
         bottom_stocks_table = build_table(bottom_list, dict_data, 'bottom_list_table_id')
-        print bottom_stocks_table
         message = """<html><head>
                     <link rel="stylesheet" type="text/css" href="DataTables/css/jquery.dataTables.min.css">
                     <link rel="stylesheet" type="text/css" href="Select-1.2.0/css/select.dataTables.min.css">
                     <link rel="stylesheet" type="text/css" href="css/StockRanker.css">
                     <script type="text/javascript" charset="utf8" src="js/jquery-1.12.3.js"></script>
                     <script type="text/javascript" charset="utf8" src="js/loader.js"></script>
-                    <script type="text/javascript" charset="utf8" src="DataTables/js/jquery.dataTables.min.js"></script>
+                    <script type="text/javascript" charset="utf8" src="js/datatables.min.js"></script>
                     <script type="text/javascript" charset="utf8" src="Select-1.2.0/js/dataTables.select.min.js"></script>"""
 
 
@@ -41,6 +39,7 @@ def build_html_file(top_list, bottom_list, dict_data, script_list):
                             </div>
                         </div>
                         <br>
+                        <div id="chart_title"></div>
                         <div id="dashboard">
                             <div id="chart_div"></div>
                             <div id="control_div"></div>

@@ -32,3 +32,29 @@
 	background-color: #03409C;
 	color: white;
 }
+
+#chart_title{	
+	color: #03409C;
+	font-weight: bold;
+	text-align: center;
+	font-size: 25;
+	width: 90%;
+    margin: auto;
+}
+
+#dashboard{
+	width: 90%;
+    margin: auto;
+}
+
+#chart_div{
+	width: 100%;
+	margin: auto;
+	display: inline-block;
+}
+
+#control_div{
+	width: 100%;
+	margin: auto;
+	display: inline-block;
+}
