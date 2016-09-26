@@ -1,0 +1,4 @@
+1. YTD stock returns were calculated on the basis of using the closing price from 12/31/2015.
+2. Closing price quotes are retrieved from 12/31/2015 up until today's date if the time is after 16:10, or yesterday's date if prior to 16:10. The extra 10 minutes after close is intended to account for the delay in the data feed.
+3. For the stock price/return charts, any gaps in data were filled in using the previous price, or 0 for the return. If no previous price was available, it was filled with the next available price.
+4. Only S&P 500 constituents as of the current date are included in the analysis. Any constituents which were a part of the index in 2016, but subsequently removed from the index, are excluded.

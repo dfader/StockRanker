@@ -21,6 +21,7 @@ date_list = []
 str_start_date = '12/31/15'
 str_end_date = time.strftime('%x')
 b_alternate_ytd = True
+b_alternate_quotes = True
 
 print 'Retrieving valid trading days from  quotes up until ' + str_start_date + ' to ' + str_end_date
 
@@ -141,19 +142,25 @@ try:
         query_list.append('WIKI/' + symbol_inf.query_symbol + '.11')
 
     # Query Close Data for entire bottom list
-    quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
+    if not b_alternate_quotes:
+        quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
     for symbol_inf in bottom_list:
-        b_alternate = False
-        close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
-        # if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
-        #     close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
-        #     b_alternate = True
+        if not b_alternate_quotes:
+            close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
+
+            # if invalid values are found or quotes are missing: switch to alternate data source (kibot)
+            if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
+                close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+        else:
+            # if using alternate data source (kibot), we must query each symbol individually
+            close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+
         # Calculate daily returns
         j = 0
         prev_close = 0
         daily_returns = []
         for close in close_prices:
-            if b_alternate:
+            if b_alternate_quotes:
                 close = close[1]
             if j == 0:
                 daily_returns.append(0)
@@ -166,7 +173,7 @@ try:
 
         # Build two-dimensional matrix of date, closing price, and daily return
         matrix = []
-        if b_alternate:
+        if b_alternate_quotes:
             matrix = [[close_prices[i][0], close_prices[i][1], daily_returns[i]] for i in range(len(close_prices))]
         else:
             matrix = [[list(close_prices.index)[i], close_prices[i], daily_returns[i]] for i in range(len(close_prices))]
@@ -177,20 +184,26 @@ try:
     for symbol_inf in top_list or math.isnan(close_prices[0]):
         query_list.append('WIKI/' + symbol_inf.query_symbol + '.11')
 
-    # Query Close Data for entire bottom list
-    quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
-
+    # Query Close Data for entire top list
+    if not b_alternate_quotes:
+        quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
     for symbol_inf in top_list:
-        close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
-        # if len(close_prices) < len(date_list):
-        #     close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+        if not b_alternate_quotes:
+            close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
+
+            # if invalid values are found or quotes are missing: switch to alternate data source (kibot)
+            if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
+                close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+        else:
+            # if using alternate data source (kibot), we must query each symbol individually
+            close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
 
         # Calculate daily returns
         j = 0
         prev_close = 0
         daily_returns = []
         for close in close_prices:
-            if b_alternate:
+            if b_alternate_quotes:
                 close = close[1]
             if j == 0:
                 daily_returns.append(0)
@@ -199,11 +212,14 @@ try:
                 ret = round((close / prev_close) - 1, 4)
                 prev_close = close
                 daily_returns.append(ret)
-            j += 1
+            j+= 1
 
         # Build two-dimensional matrix of date, closing price, and daily return
         matrix = []
-        matrix = [[list(close_prices.index)[i], close_prices[i], daily_returns[i]] for i in range(len(close_prices))]
+        if b_alternate_quotes:
+            matrix = [[close_prices[i][0], close_prices[i][1], daily_returns[i]] for i in range(len(close_prices))]
+        else:
+            matrix = [[list(close_prices.index)[i], close_prices[i], daily_returns[i]] for i in range(len(close_prices))]
         dict_quotes[symbol_inf.symbol] = matrix
 
 except Exception as e:
