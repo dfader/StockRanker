@@ -24,8 +24,7 @@ def get_open_days(root, b_start_month, b_final_month,
                   d_start_date=datetime.strptime(time.strftime('%x'), '%x'),
                   d_end_date=datetime.strptime(time.strftime('%x'), '%x')):
     date_list = []
-    str_year = root[0].text
-    str_month = root[1].text
+
     days = root[2]
     for day in days.findall('day'):
         if day.find('status').text == 'open':
@@ -38,8 +37,9 @@ def get_open_days(root, b_start_month, b_final_month,
                 if d_date < d_end_date:
                     date_list.append(day.find('date').text)
                 elif d_date == d_end_date:
-                    cur_hour = time.strftime('%H')
-                    cur_min = time.strftime('%M')
+                    cur_hour = int(time.strftime('%H'))
+                    cur_min = int(time.strftime('%M'))
+                    # Assume that closing price quote won't be available until 16:10 of current day
                     if cur_hour >= 16 and cur_min >= 10:
                         date_list.append(day.find('date').text)
             else:
@@ -49,7 +49,7 @@ def get_open_days(root, b_start_month, b_final_month,
 
 
 # Expects start_date & end_date in the Locale's appropriate date representation (i.e. %x -> mm/dd/YY for US/CA)
-# Returns the # of trading days between start_date and end_date
+# Returns a list of valid trading days between start date and end date
 # If current local time > 16:00, return value is inclusive of end_date, else it is exclusive
 def get_trading_days(str_start_date, str_end_date):
     date_list = []
@@ -67,6 +67,7 @@ def get_trading_days(str_start_date, str_end_date):
 
         if d_start_date > d_end_date:
             raise ValueError('StartDate > End_date')
+
         # Get trading days in previous years
         elif n_start_year < n_end_year:
 

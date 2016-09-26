@@ -1,6 +1,7 @@
 from urllib2 import Request, urlopen, URLError
 import finsymbols
 import time
+import math
 from datetime import datetime
 import collections
 import get_trading_calendar as gtc
@@ -9,145 +10,222 @@ import pull_stock_data as psd
 import build_html
 import build_js
 import sys, traceback
+import SymbolInfo as SI
 
-ytd_return = collections.namedtuple('ytd_return', 'symbol ytd_return')
-date_quote = collections.namedtuple('date_quote', 'date price')
+NUMBER_OF_COMPANIES = 25
+symbol_info = collections.namedtuple('symbol_info', 'symbol name query_symbol ytd_return')
 dict_returns = {}
 dict_quotes = {}
-dict_data = {}
+dict_symbol_data = {}
 date_list = []
 str_start_date = '12/31/15'
 str_end_date = time.strftime('%x')
+b_alternate_ytd = True
 
-def get_quotes(symbol):
-    return dict_quotes[symbol]
+print 'Retrieving valid trading days from  quotes up until ' + str_start_date + ' to ' + str_end_date
 
-try:
-    today = time.strftime("%x")
-    print 'Retrieving stock quotes up until ' + today
+# Retrieve list of valid trading days between start and end dates
+date_list = gtc.get_trading_days(str_start_date, str_end_date)
 
-    n_year = datetime.strptime(str_end_date, '%x').year
-    date_list = gtc.get_trading_days(str_start_date, str_end_date)
-    print 'Expecting to find quotes for ' + str(len(date_list)) + ' trading days so far in calendar year ' + str(n_year)
+print 'Expecting to find quotes for ' + str(len(date_list)) + ' trading days from ' + str_start_date + ' to ' + str_end_date
 
-except Exception as e:
-    print 'Error retrieving market calendar', e
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-    print "*** print_tb:"
-    traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+print 'Retrieving list of S&P500 Constituents'
 
-try:
-    # Login to api site
-    login = Request('http://api.kibot.com/?action=login&user=guest&password=guest')
-    urlopen(login)
+# Retrieve list of S&P500 constituents
+sp500 = finsymbols.get_sp500_symbols()
 
-    # Retrieve list of S&P500 constituents
-    print 'Retrieving list of S&P500 Constituents'
-    sp500 = finsymbols.get_sp500_symbols()
-    print 'Retrieved ' + str(len(sp500)) + ' constituents'
+print 'Retrieved ' + str(len(sp500)) + ' constituents'
 
-except Exception as e:
-    print 'Error retrieving list of S&P500 companies'
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-    print "*** print_tb:"
-    traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
-    exit(0)
+# Login to alternate data source in case it is needed
+login_url = 'http://api.kibot.com/?action=login&user=guest&password=guest'
+request = Request(login_url)
+response = urlopen(request)
 
-print 'Retrieving Quotes for Constituents'
+print 'Retrieving YTD Returns for Constituents'
 progress = 0.0
-# for j in range(0, 6):
+query_symbol_list = []
+symbol_info_list = []
+# for j in range(90, 93):
 #     entry = sp500[j]
 for entry in sp500:
+    orig_symbol = entry['symbol']
+    query_symbol = orig_symbol.replace('-', '_').replace('.', '_')
+    symbol_inf = SI.SymbolInfo(orig_symbol, entry['company'], query_symbol, 0)
+    query_symbol_list.append('WIKI/' + symbol_inf.query_symbol + '.11')
+    symbol_info_list.append(symbol_inf)
+    dict_symbol_data[orig_symbol] = symbol_inf
+
     progress+= 1
-    if progress % 50 == 0:
-        print 'Retrieved ' + str(round(((progress / 500) * 100), 0)) + '% of quotes...'
-
     try:
-        # Get Symbol
-        symbol = entry['symbol']
 
-        # quotes = psq.get_quotes(symbol, str_start_date, str_end_date)
-        # quotes += psq.get_single_quote(symbol, '09/23/16')
-        # if len(quotes) != len(date_list):
-        #     print 'Missing data for ' + symbol + \
-        #           '. Expected ' + str(len(date_list)) + \
-        #           ' trading days but got ' + str(len(quotes))
-        #     # print quotes
-        # else:
-        # lastClose = quotes['Adj. Close'][len(quotes) - 1]
-        # firstOpen = quotes['Adj. Open'][0]
-        # lastQuote = quotes[len(quotes) - 1]
-        # firstQuote = quotes[0]
-        # lastClose = float(lastQuote.find('Close').text)
-        # firstOpen = float(firstQuote.find('Open').text)
-        # lastVals = lastQuote.split(',')
-        # firstVals = firstQuote.split(',')
-        # if len(lastVals) != 6:
-        #     print 'Error in quote formatting of final quote for symbol ' + symbol + ':' + lastQuote
-        # elif len(firstVals) != 6:
-        #     print 'Error in quote formatting of first quote for symbol ' + symbol + ':' + firstQuote
-        # else:
-        #     lastClose = float(lastVals[4])
-        #     firstOpen = float(firstVals[1])
-        # ytdRet = (lastClose - firstOpen) / firstOpen
+        # Retrieve Returns in batches of 10 for first 500
+        if progress % 10 == 0 and progress <= 500:
+            if b_alternate_ytd:
+                quotes = psq.get_alternate_ytd(symbol_info_list, str_start_date, str_end_date)
+            else:
+                quotes = psq.get_ytd(query_symbol_list, str_start_date, str_end_date)
+            for symbol_inf in symbol_info_list:
+                if b_alternate_ytd:
+                    ytdRet = quotes[symbol_inf.symbol]
+                else:
+                    ytdRet = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close'][0]
 
-        quotes = psq.get_YTD(symbol, str_start_date, str_end_date)
-        ytdRet = quotes['Adj. Close'][0]
-        dict_returns[symbol] = ytdRet * 100
+                dict_symbol_data[symbol_inf.symbol].ytd_return = round(ytdRet * 100,2)
+            query_symbol_list = []
+            symbol_info_list = []
+
+        # Get remaining returns
+        elif progress == len(sp500):
+            if b_alternate_ytd:
+                quotes = psq.get_alternate_ytd(symbol_info_list, str_start_date, str_end_date)
+            else:
+                quotes = psq.get_ytd(query_symbol_list, str_start_date, str_end_date)
+
+            for symbol_inf in symbol_info_list:
+                if b_alternate_ytd:
+                    ytdRet = quotes[symbol_inf.symbol]
+                else:
+                    ytdRet = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close'][0]
+
+                dict_symbol_data[symbol_inf.symbol].ytd_return = round(ytdRet * 100, 2)
+            query_symbol_list = []
+            symbol_info_list = []
+            print 'Retrieved 100% of YTD Returns...'
+
+        if progress % 50 == 0 and progress < 500:
+            print 'Retrieved ' + str(round(((progress / 500) * 100), 0)) + '% of YTD Returns...'
+
     except Exception as e:
-        print 'Error retrieving data from entry ' + str(entry), e
+        if b_alternate_ytd:
+            print 'Error retrieving data for symbol list: ' + str(symbol_info_list), e
+        else:
+            print 'Error retrieving data for symbol list: ' + str(query_symbol_list), e
         exc_type, exc_value, exc_traceback = sys.exc_info()
         print "*** print_tb:"
         traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+        # Get Symbol
+    # symbol = entry['symbol']
 
+# Sort map of constituents by return
+# Get list of top 25 and bottom 25 performing stocks
 try:
     i = 1
     bottom_list = []
     top_list = []
-    for key, value in sorted(dict_returns.iteritems(), key=lambda (k, v): (v, k)):
-        if i <= 25:
-            bottom_list.append(ytd_return(key, round(value,2)))
+
+    # Generated sorted map
+    sorted_dict = sorted(dict_symbol_data.iteritems(), key=lambda (k, v): (v.ytd_return, k))
+
+    for key, value in sorted_dict:
+        if i <= NUMBER_OF_COMPANIES:
+            # dict_symbol_data[key].ytd_return = round(value,2)
+            bottom_list.append(dict_symbol_data[key])
         else:
             break
 
         i += 1
 
     i = 1
-    for key, value in sorted(dict_returns.iteritems(), key=lambda (k, v): (v, k), reverse=True):
-        if i <= 25:
-            top_list.append(ytd_return(key, round(value,2)))
+    for key, value in reversed(sorted_dict):
+        if i <= NUMBER_OF_COMPANIES:
+            # dict_symbol_data[key].ytd_return = round(value,2)
+            top_list.append(dict_symbol_data[key])
         else:
             break
 
         i += 1
 
-    for pair in bottom_list:
-        stock_info = psd.get_symbol_data(pair.symbol)
-        dict_data[pair.symbol] = stock_info
-        quotes = psq.get_quotes(pair.symbol, str_start_date, str_end_date)
-        close_prices = quotes['Adj. Close']
+    print 'Retrieving Full Quote list for Bottom 25 Constituents'
+    query_list = []
+    for symbol_inf in bottom_list:
+        query_list.append('WIKI/' + symbol_inf.query_symbol + '.11')
+
+    # Query Close Data for entire bottom list
+    quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
+    for symbol_inf in bottom_list:
+        b_alternate = False
+        close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
+        # if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
+        #     close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+        #     b_alternate = True
+        # Calculate daily returns
+        j = 0
+        prev_close = 0
+        daily_returns = []
+        for close in close_prices:
+            if b_alternate:
+                close = close[1]
+            if j == 0:
+                daily_returns.append(0)
+                prev_close = close
+            else:
+                ret = round((close / prev_close) - 1, 4)
+                prev_close = close
+                daily_returns.append(ret)
+            j+= 1
+
+        # Build two-dimensional matrix of date, closing price, and daily return
         matrix = []
-        for i in range(len(close_prices)):
-            matrix.append([list(close_prices.index)[i], close_prices[i]])
-        dict_quotes[pair.symbol] = matrix
-#        print pair.symbol, str(pair.ytd_return)
+        if b_alternate:
+            matrix = [[close_prices[i][0], close_prices[i][1], daily_returns[i]] for i in range(len(close_prices))]
+        else:
+            matrix = [[list(close_prices.index)[i], close_prices[i], daily_returns[i]] for i in range(len(close_prices))]
+        dict_quotes[symbol_inf.symbol] = matrix
 
-    for pair in top_list:
-        stock_info = psd.get_symbol_data(pair.symbol)
-        dict_data[pair.symbol] = stock_info
-        quotes = psq.get_quotes(pair.symbol, str_start_date, str_end_date)
-        close_prices = quotes['Adj. Close']
-        matrix = [[list(close_prices.index)[i], close_prices[i]] for i in range(len(close_prices))]
-        dict_quotes[pair.symbol] = matrix
-#        print pair.symbol, str(pair.ytd_return)
+    print 'Retrieving Full Quote list for Top 25 Constituents'
+    query_list = []
+    for symbol_inf in top_list or math.isnan(close_prices[0]):
+        query_list.append('WIKI/' + symbol_inf.query_symbol + '.11')
 
-    script_list = [build_js.build_javascript_files(top_list, bottom_list, dict_quotes, date_list)]
-    html_file = build_html.build_html_file(top_list, bottom_list, dict_data, script_list)
-    build_html.launch_page(html_file)
+    # Query Close Data for entire bottom list
+    quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
+
+    for symbol_inf in top_list:
+        close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
+        # if len(close_prices) < len(date_list):
+        #     close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+
+        # Calculate daily returns
+        j = 0
+        prev_close = 0
+        daily_returns = []
+        for close in close_prices:
+            if b_alternate:
+                close = close[1]
+            if j == 0:
+                daily_returns.append(0)
+                prev_close = close
+            else:
+                ret = round((close / prev_close) - 1, 4)
+                prev_close = close
+                daily_returns.append(ret)
+            j += 1
+
+        # Build two-dimensional matrix of date, closing price, and daily return
+        matrix = []
+        matrix = [[list(close_prices.index)[i], close_prices[i], daily_returns[i]] for i in range(len(close_prices))]
+        dict_quotes[symbol_inf.symbol] = matrix
 
 except Exception as e:
-    print 'Error getting top/bottom list', e
+    print 'Error getting top/bottom constituent list', e
     exc_type, exc_value, exc_traceback = sys.exc_info()
     print "*** print_tb:"
     traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+
+try:
+    # Build JavaScript file
+    script_list = [build_js.build_javascript_files(top_list, bottom_list, dict_quotes, date_list)]
+
+    # Fuild HTML file
+    html_file = build_html.build_html_file(top_list, bottom_list, script_list)
+
+    # Open HTML web page
+    build_html.launch_page(html_file)
+
+except Exception as e:
+    print 'Error building HTML/JS sites', e
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    print "*** print_tb:"
+    traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+
 

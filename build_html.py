@@ -3,12 +3,12 @@ import sys
 import traceback
 
 
-def build_html_file(top_list, bottom_list, dict_data, script_list):
+def build_html_file(top_list, bottom_list, script_list):
     try:
         f = open('StockRanker.html', 'w')
 
-        top_stocks_table = build_table(top_list, dict_data, 'top_list_table_id')
-        bottom_stocks_table = build_table(bottom_list, dict_data, 'bottom_list_table_id')
+        top_stocks_table = build_table(top_list, 'top_list_table_id')
+        bottom_stocks_table = build_table(bottom_list, 'bottom_list_table_id')
         message = """<html><head>
                     <link rel="stylesheet" type="text/css" href="DataTables/css/jquery.dataTables.min.css">
                     <link rel="stylesheet" type="text/css" href="Select-1.2.0/css/select.dataTables.min.css">
@@ -44,6 +44,9 @@ def build_html_file(top_list, bottom_list, dict_data, script_list):
                             <div id="chart_div"></div>
                             <div id="control_div"></div>
                         </div>
+                        <div id="instructions">Select a single row above to load the price chart for a stock,
+                                            or select multiple rows using CTRL+Click or SHIFT+Click to load the cumulative returns.
+                                            Moving the slider underneath the chart will shift the start date for cumulative returns.</div>
                     <br></body></html>"""
 
         f.write(message)
@@ -67,7 +70,7 @@ def launch_page(file_name):
         traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
 
 
-def build_table(stock_list, dict_data, table_id):
+def build_table(stock_list, table_id):
     try:
             html_table = """<table id=\"""" + table_id + """" class="stock_table">
                         <thead>
@@ -79,10 +82,9 @@ def build_table(stock_list, dict_data, table_id):
                         </thead><tbody>"""
 
             for stock in stock_list:
-                stock_data = dict_data[stock.symbol]
                 html_table += """<tr id=\"""" + stock.symbol + """">
                               <td class="center_col">""" + stock.symbol + """</td>
-                              <td>""" + stock_data.name + """</td>
+                              <td>""" + stock.name + """</td>
                               <td class="center_col">""" + str(stock.ytd_return) + """</td>
                               </tr>"""
 

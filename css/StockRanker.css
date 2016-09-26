@@ -35,6 +35,7 @@
 
 #chart_title{	
 	color: #03409C;
+	padding: 10px;
 	font-weight: bold;
 	text-align: center;
 	font-size: 25;
@@ -57,4 +58,14 @@
 	width: 100%;
 	margin: auto;
 	display: inline-block;
+}
+
+#instructions{
+	width: 60%;
+	text-align: center;
+	margin: auto;
+	padding: 20px;
+	font-size: 14;
+	font-weight: bold;
+	color: #1B40A4;
 }

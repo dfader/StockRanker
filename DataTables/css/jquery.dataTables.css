@@ -68,7 +68,7 @@ table.dataTable tbody tr:nth-child(even) {
   background-color: #ECEFF7;
 }
 table.dataTable tbody tr.selected {
-  background-color: #B0BED9;
+  background-color: #49FFA8;
 }
 table.dataTable tbody th,
 table.dataTable tbody td {
