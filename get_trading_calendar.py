@@ -40,7 +40,7 @@ def get_open_days(root, b_start_month, b_final_month,
                     cur_hour = int(time.strftime('%H'))
                     cur_min = int(time.strftime('%M'))
                     # Assume that closing price quote won't be available until 16:10 of current day
-                    if cur_hour >= 16 and cur_min >= 10:
+                    if (cur_hour > 16) or (cur_hour == 16 and cur_min >= 10):
                         date_list.append(day.find('date').text)
             else:
                 date_list.append(day.find('date').text)
@@ -54,10 +54,8 @@ def get_open_days(root, b_start_month, b_final_month,
 def get_trading_days(str_start_date, str_end_date):
     date_list = []
     try:
-        print 'Getting # of trading days between ' + str_start_date + ' and ' + str_end_date
-
-        d_start_date = datetime.strptime(str_start_date, '%x')
-        d_end_date = datetime.strptime(str_end_date, '%x')
+        d_start_date = datetime.strptime(str_start_date, '%Y-%m-%d')
+        d_end_date = datetime.strptime(str_end_date, '%Y-%m-%d')
 
         n_start_year = d_start_date.year
         n_start_month = d_start_date.month
