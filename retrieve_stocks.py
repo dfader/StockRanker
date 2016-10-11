@@ -46,7 +46,7 @@ print 'Retrieving YTD Returns for Constituents'
 progress = 0.0
 query_symbol_list = []
 symbol_info_list = []
-# for j in range(90, 93):
+# for j in range(0, 50):
 #     entry = sp500[j]
 for entry in sp500:
     orig_symbol = entry['symbol']
@@ -145,12 +145,14 @@ try:
     if not b_alternate_quotes:
         quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
     for symbol_inf in bottom_list:
+        f = open('stock_data\\' + symbol_inf.symbol + '_returns', 'w')
+        f.write('date,ytd_ret\n')
         if not b_alternate_quotes:
             close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
 
             # if invalid values are found or quotes are missing: switch to alternate data source (kibot)
-            if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
-                close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+            #if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
+             #   close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
         else:
             # if using alternate data source (kibot), we must query each symbol individually
             close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
@@ -175,6 +177,8 @@ try:
         matrix = []
         if b_alternate_quotes:
             matrix = [[close_prices[i][0], close_prices[i][1], daily_returns[i]] for i in range(len(close_prices))]
+            for i in range(len(close_prices)):
+                f.write(str(close_prices[i][0]) + ',' + str(daily_returns[i]) + '\n')
         else:
             matrix = [[list(close_prices.index)[i], close_prices[i], daily_returns[i]] for i in range(len(close_prices))]
         dict_quotes[symbol_inf.symbol] = matrix
@@ -188,12 +192,14 @@ try:
     if not b_alternate_quotes:
         quotes = psq.get_quotes(query_list, str_start_date, str_end_date)
     for symbol_inf in top_list:
+        f = open('stock_data\\'+symbol_inf.symbol+'_returns', 'w')
+        f.write('date,ytd_ret\n')
         if not b_alternate_quotes:
             close_prices = quotes['WIKI/' + symbol_inf.query_symbol + ' - Adj. Close']
 
             # if invalid values are found or quotes are missing: switch to alternate data source (kibot)
-            if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
-                close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
+            #if len(close_prices) < len(date_list) or math.isnan(close_prices[0]):
+                #close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
         else:
             # if using alternate data source (kibot), we must query each symbol individually
             close_prices = psq.get_alternate_quotes(symbol_inf.symbol, str_start_date, str_end_date)
@@ -218,6 +224,8 @@ try:
         matrix = []
         if b_alternate_quotes:
             matrix = [[close_prices[i][0], close_prices[i][1], daily_returns[i]] for i in range(len(close_prices))]
+            for i in range(len(close_prices)):
+                f.write(str(close_prices[i][0]) + ',' + str(daily_returns[i]) + '\n')
         else:
             matrix = [[list(close_prices.index)[i], close_prices[i], daily_returns[i]] for i in range(len(close_prices))]
         dict_quotes[symbol_inf.symbol] = matrix
